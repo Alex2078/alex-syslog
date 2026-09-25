@@ -1,0 +1,46 @@
+services:
+  syslog-app:
+    build: .
+    image: syslog-server:1.2
+    container_name: syslog-app
+    restart: unless-stopped
+    command: sh -c "python syslog_listener.py /app/data/syslog.log 0.0.0.0 514 & exec gunicorn app:app --workers 1 --worker-class gevent --bind 0.0.0.0:5000 --timeout 0"
+    environment:
+      - SYSLOG_PORT=514
+      - SYSLOG_LOG_FILE=/app/data/syslog.log
+      - STATS_LOG_FILE=/app/data/stats.log
+      - FLASK_DEBUG=false
+      - SYSLOG_DISPLAY_HOST=alex-syslog
+    volumes:
+      - ./data:/app/data                             # 
+      - ./app.py:/app/app.py:ro                      # 
+      - ./config.py:/app/config.py:ro
+      - ./syslog_listener.py:/app/syslog_listener.py:ro
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "514:514/udp"              # UDP syslog (M240)
+      - "514:514/tcp"              # TCP syslog (M247)
+    cap_add:
+      - NET_BIND_SERVICE
+    networks:
+      - syslog-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: syslog-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - syslog-app
+    networks:
+      - syslog-network
+
+networks:
+  syslog-network:
+    driver: bridge

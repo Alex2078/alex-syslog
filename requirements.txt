@@ -1,21 +1,4 @@
-# requirements.txt
-# Python dependencies for kat_syslog
-# Install with: pip install -r requirements.txt
-
-# Web framework
 Flask>=2.3.0,<4.0.0
-
-# Production WSGI server (optional, for gunicorn support)
-# gunicorn>=21.0.0,<24.0.0
-
-# Development dependencies (optional, uncomment if needed)
-# flask-debugtoolbar>=0.14.0
-# pytest>=7.0.0
-# black>=23.0.0
-# flake8>=6.0.0
-
-# Note: Standard library modules used:
-# - socket (UDP communication)
-# - threading (async syslog listener)
-# - json (API responses)
-# No additional packages required for core functionality
+chardet>=5.0.0
+gunicorn>=21.0.0
+gevent>=21.0.0

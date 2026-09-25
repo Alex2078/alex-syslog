@@ -1,36 +1,63 @@
-# .dockerignore
-# Исключаем из сборки ненужные файлы
-
-# Git и IDE
+# === Git ===
 .git
 .gitignore
-.idea/
-.vscode/
-*.swp
-*.swo
+.gitattributes
 
-# Python
+# === Python ===
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# === Virtual environments ===
 venv/
 env/
+ENV/
 .venv/
-pip-log.txt
-pip-delete-this-directory.txt
+.env
 
-# Логи и данные (не должны быть в образе)
-syslog.log
+# === Testing / coverage ===
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+htmlcov/
+.hypothesis/
+
+# === IDE / editor ===
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# === Project-specific ===
+data/
 *.log
+stats.log
 
-# Тесты и документация (если не нужны в runtime)
-tests/
-*.md
-!.dockerignore
-!README.md
-
-# Docker-файлы (не копируем сами себя)
-Dockerfile
+# === Docker ===
 docker-compose*.yml
+.dockerignore
+
+# === Documentation ===
+README.md
+LICENSE
+docs/

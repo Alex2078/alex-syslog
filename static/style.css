@@ -1,0 +1,411 @@
+/*
+# Syslog Server – real-time syslog viewer
+# Copyright (C) 2026  Alex
+# ... (лицензия без изменений)
+*/
+
+:root {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #111;
+    --bg-header: #0d0d0d;
+    --bg-filter: #1a1a1a;
+    --bg-stat: #0d0d0d;
+    --bg-ip: #1a2a1a;
+    --bg-ip-hover: #1a3a1a;
+    --bg-reset: #2a0000;
+    --bg-hover-row: #111;
+
+    --text-primary: #33ff33;
+    --text-secondary: #66ff66;
+    --text-ip: #66ff66;
+    --text-ip-hover: #88ff88;
+    --text-reset: #ff5555;
+    --text-info: #66ccff;
+    --text-warn: #ffcc00;
+    --text-error: #ff5555;
+    --text-debug: #cc88ff;
+    --text-th: #88ff88;
+
+    --text-tcp: #ff9933;    /* оранжевый */
+    --text-udp: #33aaff;    /* синий */
+    --text-hostname: #cccccc;
+
+    --border-color: #2a2a2a;
+    --border-ip: #2a4a2a;
+    --line-separator: #1a1a1a;
+
+    --shadow-green: rgba(51, 255, 51, 0.3);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+body {
+    background: var(--bg-primary);
+    min-height: 100vh;
+    padding: 20px;
+    color: var(--text-primary);
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    box-shadow: 0 0 30px var(--shadow-green);
+}
+
+.header {
+    background: var(--bg-header);
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 2.5em;
+    color: var(--text-primary);
+    text-shadow: 0 0 10px var(--shadow-green);
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    font-size: 1em;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    font-weight: 300;
+}
+
+.info-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    opacity: 0.8;
+    letter-spacing: 0.5px;
+}
+
+.info-right { font-weight: 500; white-space: nowrap; }
+
+.filter-status {
+    background: var(--bg-filter);
+    padding: 15px 25px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filter-info { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+
+.filter-badge {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg-header);
+    border: 1px solid var(--text-primary);
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.filter-badge .ip {
+    background: var(--bg-stat);
+    padding: 2px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.reset-button {
+    background: var(--bg-reset);
+    color: var(--text-reset);
+    border: 1px solid var(--text-reset);
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+.reset-button:hover { background: var(--text-reset); color: var(--bg-primary); }
+
+.stats { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+
+.stat-item {
+    padding: 6px 14px;
+    background: var(--bg-stat);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.2s;
+    color: var(--text-primary);
+}
+.stat-item:hover { border-color: var(--text-primary); background: var(--bg-filter); }
+
+/* --- Таблица логов --- */
+.log-container {
+    height: calc(100vh - 280px);
+    min-height: 400px;
+    overflow: auto;
+    background: var(--bg-primary);
+    position: relative;
+}
+
+.log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    table-layout: fixed;   /* ровные столбцы */
+}
+
+.log-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.log-table th {
+    background: var(--bg-header);
+    color: var(--text-th);
+    font-weight: 600;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 2px solid var(--border-color);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.log-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--line-separator);
+    vertical-align: top;
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- Столбцы (используются через <colgroup> и table-layout: fixed) --- */
+.col-date     { width: 105px;  white-space: nowrap; }
+.col-time     { width: 150px;  white-space: nowrap; }
+.col-ip       { width: 145px;  white-space: nowrap; }
+.col-proto    { width: 75px;   white-space: nowrap; text-align: center; }
+.col-hostname { width: 145px;  white-space: nowrap; }
+.col-level    { width: 100px;  white-space: nowrap; }
+.col-message  { width: auto;   white-space: normal; word-break: break-word; }
+
+/* Строки */
+.log-entry { background: transparent; transition: background 0.2s; }
+.log-entry:hover {
+    background: var(--bg-hover-row);
+    box-shadow: inset 0 3px 0 var(--text-primary),
+                inset 0 -3px 0 var(--text-primary);
+}
+.log-entry.new { animation: highlightEntry 1.2s ease-out; }
+
+/* Модальное окно справки */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999;
+    backdrop-filter: blur(4px);
+}
+.modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    max-width: 700px;
+    width: 90%;
+    padding: 20px 25px;
+    box-shadow: 0 0 40px var(--shadow-green);
+    color: var(--text-primary);
+}
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px; margin-bottom: 15px;
+}
+.modal-title { font-size: 1.4em; font-weight: 600; color: var(--text-primary); }
+.modal-close {
+    background: none; border: none; color: var(--text-primary);
+    font-size: 1.8em; cursor: pointer; opacity: 0.7; transition: 0.2s;
+}
+.modal-close:hover { opacity: 1; transform: rotate(90deg); }
+.modal-body p { margin: 10px 0; line-height: 1.5; }
+
+.command-block {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 12px 0;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+}
+.command-block code {
+    font-family: 'Consolas', monospace;
+    font-size: 0.95em;
+    color: var(--text-primary);
+    word-break: break-all; flex: 1;
+}
+.copy-button {
+    background: var(--bg-ip);
+    border: 1px solid var(--border-ip);
+    color: var(--text-ip);
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9em;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+.copy-button:hover { background: var(--bg-ip-hover); color: var(--text-ip-hover); }
+.help-note { font-size: 0.9em; opacity: 0.8; color: var(--text-secondary); }
+
+@keyframes highlightEntry {
+    0% { background-color: rgba(51, 255, 51, 0.2); }
+    100% { background-color: transparent; }
+}
+
+/* Цвета уровней */
+.log-level-info  { color: var(--text-info); }
+.log-level-warn  { color: var(--text-warn); }
+.log-level-error { color: var(--text-error); }
+.log-level-debug { color: var(--text-debug); }
+
+/* IP-адрес */
+.ip-address {
+    display: inline-block;
+    padding: 0 2px;
+    color: var(--text-ip);
+    cursor: pointer;
+    text-decoration: underline;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+.ip-address:hover { color: var(--text-ip-hover); }
+
+/* Бейдж протокола */
+.proto-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    vertical-align: middle;
+    user-select: none;
+    line-height: 1.4;
+}
+.proto-badge.proto-tcp { color: var(--text-tcp); }   /* оранжевый */
+.proto-badge.proto-udp { color: var(--text-udp); }   /* синий */
+
+/* HOSTNAME */
+.hostname { color: var(--text-hostname); }
+.hostname-empty { color: #444; }
+
+/* Заглушки */
+.no-logs, .loading {
+    text-align: center; padding: 40px 20px;
+    color: var(--text-secondary); opacity: 0.6; font-size: 1.1em;
+}
+.loader {
+    width: 40px; height: 40px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--text-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 15px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Скроллбар */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-primary); }
+
+/* --- Модальное окно очистки лога --- */
+.password-input {
+    width: 100%;
+    padding: 10px 12px;
+    margin: 8px 0 4px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 1em;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.password-input:focus {
+    border-color: var(--text-primary);
+    box-shadow: 0 0 6px var(--shadow-green);
+}
+
+.password-error {
+    min-height: 1.2em;
+    color: var(--text-error);
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.modal-button {
+    padding: 8px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.95em;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.modal-button-cancel {
+    background: var(--bg-stat);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+.modal-button-cancel:hover {
+    border-color: var(--text-primary);
+}
+
+.modal-button-danger {
+    background: var(--bg-reset);
+    color: var(--text-reset);
+    border-color: var(--text-reset);
+}
+.modal-button-danger:hover {
+    background: var(--text-reset);
+    color: var(--bg-primary);
+}
+
+@media (max-width: 768px) {
+    .container { margin: 10px; border-radius: 6px; }
+    .filter-status { flex-direction: column; align-items: stretch; }
+    .header h1 { font-size: 1.8em; }
+    .log-container { height: calc(100vh - 320px); }
+}
