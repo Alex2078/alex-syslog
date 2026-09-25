@@ -1,41 +1,50 @@
-# kat_syslog
+# alex-syslog
 
 * **Syslog server with a Python/Flask web interface**
 
 A lightweight server for receiving, saving, and viewing syslog messages over UDP with a user-friendly web interface for real-time log monitoring.
 
-## ✨ Opportunities
+## Opportunities
 
  Receiving syslog messages over UDP protocol (default port 514)
-- , A web interface for viewing logs in a browser
-- ⚡ Real-time log updates via Server-Sent Events (SSE)
-- 🔍 Message filtering by sender's IP address
-- ⬇️ Downloading the full log file
- Asynchronous operation: the syslog listener is running in a separate process
+- A web interface for viewing logs in a browser
+- Real-time log updates via Server-Sent Events (SSE)
+- Message filtering by sender's IP address
+- Downloading the full log file
+- Asynchronous operation: the syslog listener is running in a separate process
 - Flexible configuration via a file `config.py `
 
-## 🛠 Technologies
+## Technologies
 
 - **Python 3.x**
 - **Flask** — web framework
 - **Socket** — working with UDP
 - **HTML/CSS/JS** — frontend of the web interface
+## Project structure
 
-## 📦 Project structure
+```
+alex-syslog/
+├── app.py                  # Main Flask application (web interface)
+├── syslog_listener.py      # Syslog listener (UDP + TCP server)
+├── config.py               # Configuration file
+├── requirements.txt        # Python dependencies
+├── Dockerfile              # Image definition
+├── docker-compose.yml      # Compose orchestration
+├── nginx/
+│   └── default.conf        # Nginx reverse proxy config
+├── templates/
+│   └── index.html          # Web interface template
+├── static/
+│   ├── script.js           # Frontend logic
+│   ├── style.css           # Styling
+│   └── favicon.svg         # Icon
+├── data/                   # Runtime logs (git-ignored)
+├── README.md               # Documentation
+└── LICENSE                 # GPL v3 License
+```
 
-    kat_syslog/
-├── app.py # The main Flask application (web interface)
-├── syslog_listener.py # Syslog message receiving module (UDP server)
-├── config.py # Configuration file
-├── maketest.py # Script for generating test messages
-├── templates/          # HTML web interface templates
-    │   └── index.html
-    ├── syslog.log # File for recording logs (created automatically)
-├── README.md # Documentation
-    └── LICENSE.TXT # GPL v3 License
 
-
-## 🚀 Installation and launch
+## Installation and launch
 
 ### Requirements
 
@@ -45,8 +54,8 @@ A lightweight server for receiving, saving, and viewing syslog messages over UDP
 ### 1. Cloning a repository
 
 ```bash
-git clone https://github.com/Alex2078/kat_syslog.git
-cd kat_syslog
+git clone https://github.com/Alex2078/alex-syslog.git
+cd alex-syslog
 ```
 
 pip install flask
@@ -83,42 +92,42 @@ python3 app.py
     Syslog listener will start receiving messages on UDP 514
     , The web interface will be available at: http://localhost:5000
 
-### 6. 🌐 Using the web interface
+### 6. Using the web interface
 
 Open in the browser: http://<your_server>:5000
 View the latest log entries (automatic updates)
 Use the Filter by IP field to filter messages.
 Click Download Log to download the full syslog.log file.
 
-### 7. 📄 License
+### 7. License
 
 The project is distributed under the GNU General Public License v3.0.
 
-### 8. 🐳 Docker Hub
+### 8. Docker Hub
 
-Official image: [`alex2078/kat_syslog`](https://hub.docker.com/r/alex2078/kat_syslog)
+Official image: [`powerlion/syslog-server`](https://hub.docker.com/r/powerlion/syslog-server)
 
 ### 8.1 Quick start
 
 ```bash
 # Pull the image
-docker pull alex2078/kat_syslog:latest
+docker pull powerlion/syslog-server:latest
 ```
 
 ## 8.2 Run with docker run
 ```bash
 docker run -d \
-  --name kat_syslog \
+  --name syslog-app \
   -p 5000:5000 \
   -p 514:514/udp \
   -v $(pwd)/syslog.log:/app/syslog.log \
-  alex2078/kat_syslog:latest
+  powerlion/syslog-server:latest
 ```
 
 ## 8.3 Or with docker-compose
 ```bash
-wget https://raw.githubusercontent.com/Alex2078/kat_syslog/main/docker-compose.yml
+wget https://raw.githubusercontent.com/Alex2078/alex-syslog/main/docker-compose.yml
 docker-compose up -d
 ```bash
 
-Проект распространяется под лицензией GNU General Public License v3.0.
+The project is distributed under the GNU General Public License v3.0.
